@@ -1,0 +1,238 @@
+import random
+import string
+import telebot
+from telebot import types
+import requests
+from aiogram import Bot, Dispatcher, executor, types
+from openpyxl import load_workbook
+import boto3
+
+flag = 0
+edit_id_joke = ''
+USER_STORAGE_URL = 'https://docapi.serverless.yandexcloud.net/ru-central1/b1gp2q557dvl2l5j36sm/etnvu4oog74kqb4sempk'
+AWS_SECRET_KEY = 'YCNHnYz2jtbApoe3_eVgHNYDMpol_JB1ozVlHoJk'
+AWS_PUBLIC_KEY = 'YCAJEyBwbf5U_e_9rQKGSkN-V'
+book = load_workbook(filename='Jokes.xlsx')
+id_joke = ''
+new_joke = ''
+
+#------------------------------------------------------------------------------------------------------------------
+
+database = boto3.resource('dynamodb',
+                          endpoint_url = USER_STORAGE_URL,
+                          region_name = 'ru-central1',
+                          aws_access_key_id = AWS_PUBLIC_KEY,
+                          aws_secret_access_key = AWS_SECRET_KEY)
+
+forecast = database.Table('offered')
+
+#------------------------------------------------------------------------------------------------------------------
+
+sheet_familly = book['Семья']
+sheet_job = book['Работа']
+sheet_evrei = book['Евреи']
+sheet_school = book['Школа']
+sheet_doctor = book['Врачи']
+sheet_holiday = book['Праздники']
+sheet_offered = book['Анекдоты от студентов']
+sheet_god = book['Бог']
+sheet_schtirliz = book['Штирлиц']
+sheet_policy = book['Политика']
+
+bot = Bot('6911364048:AAElrfqicGFX2nDpS2vtFTMlaobY49iehqE')
+dp = Dispatcher(bot)
+
+img = "https://storage.yandexcloud.net/telegram-bot-project/1.jpg"
+
+
+@dp.message_handler(commands=['start'])
+async def info(message: types.Message):
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton('Хочу анекдот!', callback_data='joke'))
+    markup.add(types.InlineKeyboardButton('Хочу предложить анекдот!', callback_data='offer'))
+    await bot.send_photo(chat_id=message.chat.id, photo="https://storage.yandexcloud.net/telegram-bot-project/1.jpg", caption='Приветствую, пришли поделать хиханьки-хаханьки?')
+    await message.reply('Чего изволите', reply_markup=markup)
+
+@dp.callback_query_handler()
+async def callback(call):
+    global flag
+    if call.data == 'offer':
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton('Хочу предложить анекдот!', callback_data='offer_new'))
+        markup.add(types.InlineKeyboardButton('Хочу изменить анекдот', callback_data='change'))
+        markup.add(types.InlineKeyboardButton('Хочу удалить анекдот', callback_data='delete_joke'))
+        await call.message.answer("Уточните", reply_markup=markup)
+
+    if call.data == 'offer_new':
+        await call.message.answer("Ну давай свою разрывную")
+        flag = 1
+    elif call.data == 'change':
+        await call.message.answer("Напишите ID вашего анекдота")
+        flag = 2
+    elif call.data == 'delete_joke':
+        await call.message.answer("За что ты его так((( \nНапиши ID бедолаги (анекдота)")
+        flag = 3
+
+    if call.data == 'joke':
+        markup = types.InlineKeyboardMarkup()
+        await call.message.answer('Выберите тему: Семья, Работа, Евреи, Школа, Врачи, Праздники, '
+                                  'Анекдоты от студентов, Бог, Штирлиц, Политика', reply_markup=markup)
+    elif call.data == 'familly':
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton('Ещё', callback_data='familly'))
+        joke = sheet_familly['B' + str(random.randint(1, 100))].value
+        await call.message.answer(joke + '\n' + '\nЧтобы вернуться, напишите "Назад"', reply_markup=markup)
+    elif call.data == 'job':
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton('Ещё', callback_data='job'))
+        joke = sheet_job['B' + str(random.randint(1, 100))].value
+        await call.message.answer(joke + '\n' + '\nЧтобы вернуться, напишите "Назад"', reply_markup=markup)
+    elif call.data == 'evrei':
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton('Ещё', callback_data='evrei'))
+        joke = sheet_evrei['B' + str(random.randint(1, 100))].value
+        await call.message.answer(joke + '\n' + '\nЧтобы вернуться, напишите "Назад"', reply_markup=markup)
+    elif call.data == 'school':
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton('Ещё', callback_data='school'))
+        joke = sheet_school['B' + str(random.randint(1, 100))].value
+        await call.message.answer(joke + '\n' + '\nЧтобы вернуться, напишите "Назад"', reply_markup=markup)
+    elif call.data == 'doctor':
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton('Ещё', callback_data='doctor'))
+        joke = sheet_doctor['B' + str(random.randint(1, 100))].value
+        await call.message.answer(joke + '\n' + '\nЧтобы вернуться, напишите "Назад"', reply_markup=markup)
+    elif call.data == 'holiday':
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton('Ещё', callback_data='holiday'))
+        joke = sheet_holiday['B' + str(random.randint(1, 100))].value
+        await call.message.answer(joke + '\n' + '\nЧтобы вернуться, напишите "Назад"', reply_markup=markup)
+    elif call.data == 'offered':
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton('Ещё', callback_data='offered'))
+        joke = sheet_offered['B' + str(random.randint(1, 101))].value
+        await call.message.answer(joke + '\n' + '\nЧтобы вернуться, напишите "Назад"', reply_markup=markup)
+    elif call.data == 'schtirliz':
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton('Ещё', callback_data='schtirliz'))
+        joke = schtirliz_joke = sheet_schtirliz['B' + str(random.randint(1, 100))].value
+        await call.message.answer(joke + '\n' + '\nЧтобы вернуться, напишите "Назад"', reply_markup=markup)
+    elif call.data == 'god':
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton('Ещё', callback_data='god'))
+        joke = sheet_god['B' + str(random.randint(1, 100))].value
+        await call.message.answer(joke + '\n' + '\nЧтобы вернуться, напишите "Назад"', reply_markup=markup)
+    elif call.data == 'policy':
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton('Ещё', callback_data='policy'))
+        joke = sheet_policy['B' + str(random.randint(1, 100))].value
+        await call.message.answer(joke + '\n' + '\nЧтобы вернуться, напишите "Назад"', reply_markup=markup)
+
+@dp.message_handler(content_types=['text'])
+async def reply(message):
+    global flag
+    global edit_id_joke
+    edit_joke = ''
+    flag_mini = 0
+    if message.text == 'Семья' or message.text == 'семья':
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton('Ещё', callback_data='familly'))
+        joke = sheet_familly['B' + str(random.randint(1,100))].value
+        await message.reply(joke + '\n' + '\nЧтобы вернуться, напишите "Назад"', reply_markup=markup)
+    if message.text == 'Работа' or message.text == 'работа':
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton('Ещё', callback_data='job'))
+        joke = sheet_job['B' + str(random.randint(1,100))].value
+        await message.reply(joke + '\n' + '\nЧтобы вернуться, напишите "Назад"', reply_markup=markup)
+    if message.text == 'Евреи' or message.text == 'евреи':
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton('Ещё', callback_data='evrei'))
+        joke = sheet_evrei['B' + str(random.randint(1,100))].value
+        await message.reply(joke + '\n' + '\nЧтобы вернуться, напишите "Назад"', reply_markup=markup)
+    if message.text == 'Школа' or message.text == 'школа':
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton('Ещё', callback_data='school'))
+        joke = sheet_school['B' + str(random.randint(1,100))].value
+        await message.reply(joke + '\n' + '\nЧтобы вернуться, напишите "Назад"', reply_markup=markup)
+    if message.text == 'Врачи' or message.text == 'врачи':
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton('Ещё', callback_data='doctor'))
+        joke = sheet_doctor['B' + str(random.randint(1,100))].value
+        await message.reply(joke + '\n' + '\nЧтобы вернуться, напишите "Назад"', reply_markup=markup)
+    if message.text == 'Праздники' or message.text == 'праздники':
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton('Ещё', callback_data='holiday'))
+        joke = sheet_holiday['B' + str(random.randint(1,100))].value
+        await message.reply(joke + '\n' + '\nЧтобы вернуться, напишите "Назад"', reply_markup=markup)
+    if message.text == 'Анекдоты от студентов' or message.text == 'анекдоты от студентов':
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton('Ещё', callback_data='offered'))
+        joke = sheet_offered['B' + str(random.randint(1,101))].value
+        await message.reply(joke + '\n' + '\nЧтобы вернуться, напишите "Назад"', reply_markup=markup)
+    if message.text == 'Штирлиц' or message.text == 'штирлиц':
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton('Ещё', callback_data='schtirliz'))
+        joke = schtirliz_joke = sheet_schtirliz['B' + str(random.randint(1,100))].value
+        await message.reply(joke + '\n' + '\nЧтобы вернуться, напишите "Назад"', reply_markup=markup)
+    if message.text == 'Бог' or message.text == 'бог':
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton('Ещё', callback_data='god'))
+        joke = sheet_god['B' + str(random.randint(1,100))].value
+        await message.reply(joke + '\n' + '\nЧтобы вернуться, напишите "Назад"', reply_markup=markup)
+    if message.text == 'Политика' or message.text == 'политика':
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton('Ещё', callback_data='policy'))
+        joke = sheet_policy['B' + str(random.randint(1,100))].value
+        await message.reply(joke + '\n' + '\nЧтобы вернуться, напишите "Назад"', reply_markup=markup)
+    if message.text == 'Назад' or message.text == 'назад':
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton('В главное меню', callback_data='joke'))
+        await message.reply('Хотите вернуться в начало?', reply_markup=markup)
+
+    if flag == 1 and flag_mini == 0:
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton('Вернуться', callback_data='joke'))
+        new_joke = str(message.text)
+        random_id = [random.choice(string.ascii_lowercase + string.digits if i != 5 else string.ascii_uppercase) for i in range(10)]
+        id_joke = str(''.join(random_id))
+        await message.reply('Балдёж, записали' + '\nID вашего анекдота: ' + id_joke, reply_markup=markup)
+        response = forecast.put_item(
+            Item={
+                'id_joke': f"{id_joke}",
+                'joke_offered': f"{new_joke}"
+            }
+        )
+        flag = 0
+
+    if flag == 2:
+        edit_id_joke = message.text
+        await message.reply('\nНапишите изменённый анекдот')
+        flag = 4
+        flag_mini = 1
+
+
+    if flag_mini != 1 and flag == 4:
+        edit_joke = message.text
+        await message.reply('Супер, поменяли!' + '\nЧтобы вернуться, напишите "Назад"')
+        response = forecast.put_item(
+            Item={
+                'id_joke': f"{edit_id_joke}",
+                'joke_offered': f"{edit_joke}"
+            }
+        )
+        flag_mini = 0
+        flag = 0
+
+    if flag == 3 and flag_mini == 0:
+        delete_id_joke = message.text
+        await message.reply('Жаль, конечно, этого добряка' + '\nЧтобы вернуться, напишите "Назад"')
+        with forecast.batch_writer() as batch:
+            batch.delete_item(
+                Key={
+                    'id_joke': f'{delete_id_joke}'
+                }
+            )
+        flag = 0
+
+
+executor.start_polling(dp)
